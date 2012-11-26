@@ -26,10 +26,7 @@ def active_user():
 		if ret.password==passw:
 			return ret
 
-def has_permission(user,permission):
-	if user:
-		return 'all' in user.permissions or permission in user.permissions
-	return False
+def has_permission(user,permission):return user.has_permission(permission) if user else False
 
 def get_oath_token(app):return Query(OAuthApp,similar_filter(app,"name")).fetch_one()
 
@@ -78,7 +75,7 @@ def category_page(key):
 	data['user']=user
 	data['forum']=forum
 	data['threads']=board.threads
-	data['trends']=board.categories
+	data['trends']=board.topics
 	data['tags'] = board.tags
 	data['mode']='trending'
 	return template("home",**data)
@@ -122,11 +119,11 @@ def new_thread(key=None):
 			"tags":tags
 		})
 		forum = Forum.load(forum_key())
-		print(key)
 		target = Category.load(decrypt(key)) if key else forum
 		target.threads.append(new_thread.key)
 		target.save()
 		new_thread.save()
+		return flash_message("Your thread has been created.","/thread/"+new_thread.slug+"/","Success")
 	raise bottle.HTTPError(404,
 	"""Sorry, but we weren't able to find what you were looking for.
 	  I hope that someday you do find it, but when you do, it won't be here.

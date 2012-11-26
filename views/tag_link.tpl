@@ -1,1 +1,1 @@
-<a href='search/{{tag}}'>{{tag.lower()}}</a>
+<a href='/search/{{tag}}' class='tag'>{{tag.lower()}}</a>

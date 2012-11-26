@@ -1,23 +1,19 @@
-%include header forum=forum
-<div class='span4'>
-	Welcome, <em>{{user.name}}</em>
-	<form method="POST" action="logout">
-		<input type='submit' class='btn btn-info' value="Logout"/>
-	</form>
-</div>
-<div class='span8'>
+%include header forum=forum, user=user
 	%for post in thread.posts:
-	<div class='row'>
-	<div class='span4'>
-		{{post.owner.name}}
+	<div class='post row'>
+	<div class='info span2'>
+		<div class='avatar'>
+			<img src="{{post.owner.avatar}}"/>
+			<strong>{{post.owner.name}}</strong>
+		</div>
 	</div>
-	<div class='span8'>
+	<div class='content span6'>
 		{{post.content}}
 	</div>
 	</div>
 	%end
-	<div class='row'>
-		<div class='span12'>
+	<div class='new-post row'>
+		<div class='span8'>
 			<form action="post" method="POST"><fieldset>
 				<legend>Quick Reply</legend>
 				<textarea name='content' class='input-block-level' rows='5'></textarea>

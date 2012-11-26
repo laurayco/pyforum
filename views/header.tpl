@@ -1,6 +1,8 @@
 <html>
 	<head>
 		<link rel="stylesheet" href="/s/css/bootstrap.css" type="text/css" />
+		<link rel="stylesheet" href="/s/css/bootstrap-responsive.css" type="text/css" />
+		<link rel="stylesheet" href="/s/css/style.css" type='text/css' />
 		<script type="text/javascript" src="/s/js/jquery.js"></script>
 		%setdefault("title",forum.name)
 		%setdefault("active_page","")
@@ -8,21 +10,10 @@
 		<title>{{title}}</title>
 	</head>
 	<body>
-		<div class="navbar navbar-static-top">
-			<div class="navbar-inner">
-				<a class="brand" href="#">{{forum.name}}</a>
-				<ul class="nav">
-				%for page in pages:
-					%if page[0].lower()==active_page.lower():
-					<li class='active'>
-						<a href="{{page[0]}}">{{page[1]}}</a></li>
-					%else:
-					<li>
-						<a href="{{page[0]}}">{{page[1]}}</a>
-					</li>
-					%end
-				%end
-				</ul>
-			</div>
-		</div>
-		<div class='container-fluid'><div class='row-fluid'>
+		<div class='body_area container-fluid'><div class='row'>
+			<div class='span4'><div class='sidebar-fixed hidden-phone'>
+				%include sidebar user=user,forum=forum
+			</div><div class='sidebar visible-phone'>
+				%include sidebar user=user,forum=forum
+			</div></div>
+			<div class='span8 main_content'>

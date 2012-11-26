@@ -2,16 +2,7 @@
 %setdefault('tags',forum.tags)
 %setdefault('threads',forum.threads)
 %setdefault('mode','overview')
-%include header forum=forum
-<div class='span4' style='padding:1em 0;'>
-	<div style="padding:1em;background:rgba(0,0,0,.2);border-radius:5px;">
-	Welcome, <em>{{user.name}}</em>
-	<form method="POST" action="/logout">
-		<input type='submit' class='btn btn-info' value="Logout"/>
-	</form>
-	</div>
-</div>
-<div class='span8'>
+%include header forum=forum,user=user
 	%if mode=='overview':
 		%if len(boards)<1:#>
 		<div class='row'><div class='span6'>
@@ -23,15 +14,16 @@
 		</div></div>
 		%end
 		%for category in boards:
-		<div class='row'>
+		<div class='category row'>
 			<div class='span8'>
 				<h3><a href='category/{{category.slug}}/'>{{category.name}}</a></h3>
 				%if len(category.description)>0:
 					<h4>{{category.description}}</h4>
 				%end
-				%if len(category.tags)>0:
-					<ul class='tags'>
-					%for tag in category.tags:
+				%topics = list(category.topics)
+				%if len(topics)>0:
+					<ul class='tags clearfix'>
+					%for tag in topics:
 					<li>
 						%include tag_link tag=tag
 					</li>
@@ -45,42 +37,29 @@
 		%end
 	%end
 	%elif mode=='trending':
-	<div class='row'>
+		<div class='trend row'><div class='span8'>
 		%for topic in trends:
-		<div class='span8'>
-			<h3><a href='category/{{category.slug}}/'>{{category.name}}</a></h3>
-			%if len(category.description)>0:
-				<h4>{{category.description}}</h4>
-			%end
-			%if len(category.tags)>0:
-				<ul class='tags'>
-				%for tag in category.tags:
-				<li>
-					%include tag_link tag=tag
-				</li>
-				%end
-			%end
-			</ul>
-		</div>
-		<div class='span4'>
-			[ extraneous info - trend ]
-		</div>
+			%include tag_link tag=topic
 		%end
-	</div>
+		</div></div>
 	%end
 	%for thread in threads:
-		<div class='span4'>
-			<h1><a href='/thread/{{thread.slug}}/'>{{thread.name}}</a></h1>
-			%if len(thread.description)>0:
-				<p>{{thread.description}}</p>
-			%end
-		</div>
-		<div class='span4'>
-			Post Count / Participants
-			Most Recent Post
-		</div>
-		<div class='span4'>
-			TAGS. ALL THE TAGS.
+		<div class='thread row'>
+			<div class='span4'>
+				<h1><a href='/thread/{{thread.slug}}/'>{{thread.name}}</a></h1>
+				%if len(thread.description)>0:
+					<p>{{thread.description}}</p>
+				%end
+			</div>
+			<div class='span4'>
+				Post Count / Participants
+				Most Recent Post
+			</div>
+			<div class='span4'>
+				%for topic in thread.tags:
+					%include tag_link tag=topic
+				%end
+			</div>
 		</div>
 	%end
 	%if len(threads)<1:#>
@@ -89,5 +68,4 @@
 			<p>Be the first to <a href='thread/'>create a thread!</a></p>
 		</div>
 	%end
-</div>
 %include footer forum=forum, tags=tags

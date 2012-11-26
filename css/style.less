@@ -1,0 +1,86 @@
+@trend_color:#444;
+@category_color:#222;
+@category_bg:#EEE;
+html
+{
+	padding:0;
+	margin:0;
+	body
+	{
+		padding:0;
+		margin:0;
+		.tag
+		{
+			&:before
+			{
+				content:"#";
+			}
+		}
+		.body_area
+		{
+			.sidebar
+			{
+				&.sidebar-fixed
+				{
+					position:fixed;
+				}
+				padding:1em 0;
+			}
+			.main_content
+			{
+				.category
+				{
+					padding:1em 0;
+					color:@category_color;
+					background:@category_bg;
+					font-family: "Trebuchet MS", sans-serif;
+					font-style: normal;
+					font-weight: bold;
+					text-transform: normal;
+					letter-spacing: -1px;
+					line-height: 1.2em;
+					margin-top:1em;
+					.tags
+					{
+						list-style-type:none;
+						margin-left:none;
+						-webkit-margin-before: 0;
+						-webkit-margin-after:0;
+						-webkit-margin-start:0;
+						-webkit-margin-end:0;
+						-webkit-padding-start:0;
+						li
+						{
+							float:left;
+							display:inline-block;
+							padding:.25em;
+							font-size:1.2em;
+						}
+					}
+				}
+				.trend
+				{
+					padding:1em 0;
+					font-size:2em;
+					.tag
+					{
+						display:block;
+						color:@trend_color;
+						font-family: Helvetica, Arial, sans-serif;
+						font-style: normal;
+						font-weight: normal;
+						text-transform: normal;
+						letter-spacing: -0.1;
+						line-height: 1.4em;
+						&:hover
+						{
+							text-shadow:rgba(0,0,0,.4) 0 0 3px;
+							text-decoration:none;
+							text-indent:1em;
+						}
+					}
+				}
+			}
+		}
+	}
+}

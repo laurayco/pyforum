@@ -1,5 +1,6 @@
 %setdefault('tags',[])
 </div>
+</div></div>
 <div class="footer container-fluid"><div class='row-fluid'>
 	<div class="span3">
 	%if len(tags)>0:
