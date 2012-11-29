@@ -1,14 +1,20 @@
 from __future__ import print_function
-from bottle import route,template,run,static_file
+from bottle import route,template as botemplate,run,static_file
 import bottle
 from pydatastore.datastore import Query
 from difflib import SequenceMatcher
 from entities import Member, Forum, Category, Post, Thread
 import base58 as encrypt
 
+def forum_key():return "1"
+
 def decrypt(k):return encrypt.from_base128(encrypt.decode(k))
 
 def parse_tags(t):return [a.strip() for a in t.split() if len(a.strip())>0]
+
+def get_categories(t):
+	t=t.key
+	return list(Query(Category,lambda c:t in c.threads))
 
 def similar_filter(cmp,attr,close=.85):
 	cmp = cmp.lower()
@@ -26,9 +32,14 @@ def active_user():
 		if ret.password==passw:
 			return ret
 
-def has_permission(user,permission):return user.has_permission(permission) if user else False
-
 def get_oath_token(app):return Query(OAuthApp,similar_filter(app,"name")).fetch_one()
+
+def template(*args,**kwargs):
+	if kwargs.get('forum',None) is None:
+		kwargs['forum'] = Forum.load(forum_key())
+	if isinstance(kwargs.get('user',0),int):
+		kwargs['user'] = active_user()
+	return botemplate(*args,**kwargs)
 
 def flash_message(message,target,title=None,duration=3):
 	title = title or "Information"
@@ -37,10 +48,7 @@ def flash_message(message,target,title=None,duration=3):
 	data['target'] = target
 	data['message'] = message
 	data['duration'] = duration
-	data['forum'] = Forum.load(forum_key())
 	return template("flash_message",**data)
-
-def forum_key():return "1"
 
 pending_activations = {}
 
@@ -54,15 +62,18 @@ def index_page():
 		return flash_message(msg,"/login","Login Required")
 	data['user'] = user
 	data['forum'] = Forum.load(forum_key())
+	data['trends'] = list(data['forum'].topics)
 	return template('home',**data)
 
 @route("/thread/:key")
 @route("/thread/:key/")
 def thread_view(key):
 	thread = Thread.load(decrypt(key))
-	forum = Forum.load(forum_key())
+	categories = get_categories(thread)
 	user = active_user()
-	return template("view_thread",forum=forum,user=user,thread=thread)
+	if any(c.access is None or c.access.has_permission(user,'read') for c in categories):
+		return template("view_thread",user=user,thread=thread)
+	return flash_message("No permission. :(", "/","501")
 
 @route("/category/:key")
 @route("/category/:key/")
@@ -71,14 +82,16 @@ def category_page(key):
 	user=active_user()
 	forum = Forum.load(forum_key())
 	board = Category.load(key)
-	data={}
-	data['user']=user
-	data['forum']=forum
-	data['threads']=board.threads
-	data['trends']=board.topics
-	data['tags'] = board.tags
-	data['mode']='trending'
-	return template("home",**data)
+	if board.has_permission(user,'list'):
+		data={}
+		data['user']=user
+		data['forum']=forum
+		data['threads']=board.threads
+		data['trends']=board.topics(user) or []
+		data['tags'] = board.tags
+		data['mode']='trending'
+		return template("home",**data)
+	return flash_message("No permission. :(","/","No permission.")
 
 @route("/thread/")#Create a new thread
 @route("/thread")#At the forum-level
@@ -172,7 +185,7 @@ def submit_category():
 		return flash_message("Your board has been created!","/category/"+board.key,"Success")
 
 @route("/login")
-def login():return template("login",forum=Forum.load(forum_key()))
+def login():return template("login",forum=Forum.load(forum_key()),user=active_user())
 
 @route("/login",method="POST")
 def set_user():
@@ -200,7 +213,7 @@ def logout():
 def proxy_logout():return logout()
 
 @route("/member")
-def register():return template("register",forum=Forum.load(forum_key()))
+def register():return template("register",forum=Forum.load(forum_key()),user=active_user())
 
 @route("/member",method="POST")
 def make_member():

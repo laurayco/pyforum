@@ -1,10 +1,4 @@
-%include header forum=forum
-<div class='span4'>
-	Welcome, <em>{{user.name}}</em>
-	<form method="POST" action="logout">
-		<input type='submit' class='btn btn-info' value="Logout"/>
-	</form>
-</div>
+%include header forum=forum, user=user
 <div class='span8'>
 	<div class='span8'>
 		<form method="POST"><fieldset>

@@ -9,8 +9,7 @@ extract_tags = lambda src:[s.string for s in src]
 class Usergroup(Entity):
 	template={
 		'name':'',
-		'description':'',
-		'permissons':[]
+		'description':''
 	}
 
 class Member(APIEntity):
@@ -138,7 +137,38 @@ class Thread(APIEntity):
 				if total>=max:break
 				total+=1
 			yield word
-			
+
+class AccessException(Entity):
+	template={
+		'permissions':[],
+		'usergroup':None#Applies to everybody, including public members
+	}
+	foreign={
+		'usergroup':Usergroup.Reference()
+	}
+
+class Access(Entity):
+	template={
+		'default':None,
+		'exceptions':[]
+	}
+	foreign={
+		'exceptions':AccessException.List(),
+		'default':AccessException.Reference()
+	}
+	def has_permission(self,user,permission):
+		d = self.default
+		ugs = user.usergroups if user else None
+		#There are default rules, it's not a public area, silly willy.
+		public = True if d is None else permission in d.permissions
+		if public:return True
+		#Okay, not public, does the user have a user group with permission to read?
+		shared = [a for a in self.exceptions if a.usergroup in user.usergroups]
+		for access in shared:#All relevant access permissions.
+			if access.usergroup:#Use 'none' as a flag to say, no, you CAN'T read this. :P
+				if 'read' in access.permissions:
+					return True
+		return False
 
 class Category(APIEntity):
 	trend_cutoff = -1
@@ -149,9 +179,72 @@ class Category(APIEntity):
 		'name':'',
 		'description':'',
 		'tags':[],
-		'threads':[]
+		'threads':[],
+		'access':None
 	}
 	foreign={
+		'threads':Thread.List(),
+		'access':Access.Reference()
+	}
+	def topics(self,user):
+		def fetch_hotwords():
+			r={}
+			for thread in self.threads:
+				for word,score in thread.hot_words:
+					r[word]=r.get(word,0)+score
+			return sorted(r.items(),key=lambda i:-1*i[1])
+		def gen():
+			i,max=0,self.trend_cutoff
+			for word,score in fetch_hotwords():
+				if max>-1:
+					if i>=max:break
+					i+=1
+				yield word
+		if self.access:
+			if self.access.has_permission(user,'list'):
+				gen()
+		else:gen()
+	def list_threads(self,user):
+		def fetch_hotwords():
+			r={}
+			for thread in self.threads:
+				for word,score in thread.hot_words:
+					r[word]=r.get(word,0)+score
+			return sorted(r.items(),key=lambda i:-1*i[1])
+		for thread in self.threads:
+			yield thread
+		if self.access:
+			if self.access.has_permission(user,'list'):
+				gen()
+		else:gen()
+	def has_permission(self,user,permi):
+		if self.access:
+			return self.access.has_permission(user,permi)
+		return True
+	@property
+	def slug(self):return base58.encode( base58.to_base128(self.key))
+
+class Theme(Entity):
+	template={
+		'css':[],
+		'js':[],
+		'name':"",
+		'author':''
+	}
+
+class Forum(Entity):
+	trend_cutoff = -1
+	access_levels=[
+		['name','threads','tags','boards','description']
+	]
+	template={
+		'name':'',
+		'boards':[],
+		'threads':[],
+		'tags':[]
+	}
+	foreign={
+		'boards':Category.List(),
 		'threads':Thread.List()
 	}
 	@property
@@ -168,20 +261,3 @@ class Category(APIEntity):
 				if i>=max:break
 				i+=1
 			yield word
-	@property
-	def slug(self):return base58.encode( base58.to_base128(self.key))
-
-class Forum(Entity):
-	access_levels=[
-		['name','threads','tags','boards','description']
-	]
-	template={
-		'name':'',
-		'boards':[],
-		'threads':[],
-		'tags':[]
-	}
-	foreign={
-		'boards':Category.List(),
-		'threads':Thread.List()
-	}

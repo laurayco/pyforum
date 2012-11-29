@@ -1,4 +1,3 @@
-%include header forum=forum
 <div class="span8 offset2">
 	<form method="POST" action="/member">
 		<fieldset>
@@ -11,4 +10,4 @@
 		</fieldset>
 	</form>
 </div>
-%include footer forum=forum
+%rebase header forum=forum, user=user
